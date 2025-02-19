@@ -77,6 +77,7 @@ class MainApp(MDApp):
     def on_start(self):
         if device_list:
             toast(device_list[0].getDeviceName())
+            Thread(target=self.recvsignal_thread, daemon=True).start()
     def reset_timer(self):
         self.running =False
         self.starttime = 0.0
@@ -97,7 +98,13 @@ class MainApp(MDApp):
             self.running =False
             self.root.ids.start_button.canvas.before.children[0].rgba = (0, 0, 1, 1)
             self.root.ids.start_button.text = "[b]Start[/b]" 
-if _name_ == "_main_":
+    def recv_signal(self):
+        while True:
+            if serial_port.is_open:
+                msg = bytes(serial_port.read(serial_port.in_waiting)).decode("utf-8").strip()
+                if msg == '0':
+                    Clock.schedule_once(lambda dt: self.start_timer())
+if __name__ == "__main__":
     device_list = usb.get_usb_device_list()
     if device_list:
     	serial_port = serial4a.get_serial_port(device_list[0].getDeviceName(), 9600)
